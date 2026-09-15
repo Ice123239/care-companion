@@ -7,33 +7,50 @@ const COMPANION_DATA = [
   {
     id: '1',
     name: 'คุณสมชาย',
+    gender: 'ชาย',
     age: 28,
-    rating: 4.9,
+    rating: 4.8,
     reviewsCount: 24,
     service: 'พาไปโรงพยาบาล',
-    location: 'บางกะปิ',
-    area: 'ปทุมวัน, บางกะปิ',
-    badge: '🏆 ฉายา “เทพแห่งการต่อคิว รพ.”',
-    badgeColor: 'text-[#B85B42]',
+    location: 'สามย่าน',
+    area: 'พาไป รพ.จุฬาลงกรณ์ และ รพ.ใกล้เคียง',
+    badge: 'ประวัติแจ่ม, ปราศจากประวัติอาชญากรรม',
+    badgeColor: 'bg-[#002D12]',
     avatarBg: 'bg-[#DCE7E1]',
-    icon: '🧑',
+    hourlyRate: 350,
     link: '/companion',
   },
   {
     id: '2',
-    name: 'คุณวิภา',
+    name: 'คุณสมหญิง',
+    gender: 'หญิง',
     age: 32,
     rating: 5.0,
     reviewsCount: 18,
-    service: 'ชวนคุย/เดินเล่น',
+    service: 'ช่วยซื้อมือถือ/อุปกรณ์',
     location: 'ห้วยขวาง',
-    area: 'ห้วยขวาง, ดินแดง',
-    badge: '🏆 ฉายา “นักฟังตัวยง”',
-    badgeColor: 'text-[#204A42]',
-    avatarBg: 'bg-[#FCE8E6]',
-    icon: '👩',
-    link: '/reviews',
+    area: 'ห้วยขวาง, รัชดา',
+    badge: 'นั่งรถตู้เป็น, ชำนาญเส้นทาง',
+    badgeColor: 'bg-[#2D1B00]',
+    avatarBg: 'bg-[#F2E5D0]',
+    hourlyRate: 300,
+    link: '/companion',
   },
+];
+
+const LOCATIONS = [
+  'สามย่าน (รพ.จุฬาฯ)',
+  'พญาไท (รพ.พญาไท 1 / รพ.ราชวิถี)',
+  'อนุสาวรีย์ฯ (รพ.รามาฯ)',
+  'ห้วยขวาง',
+  'บางซื่อ',
+];
+
+const SERVICES = [
+  'พาไปโรงพยาบาล',
+  'ช่วยซื้อมือถือ / อุปกรณ์',
+  'พาไปธนาคาร / ทำธุรกรรม',
+  'เดินเป็นเพื่อน / ซื้อของ',
 ];
 
 export default function HomePage() {
@@ -43,8 +60,9 @@ export default function HomePage() {
 
   const handleSearch = () => {
     const result = COMPANION_DATA.filter((item) => {
-      const matchService = item.service.includes(serviceFilter) || serviceFilter === '';
-      const matchLocation = item.area.includes(locationFilter) || locationFilter === '';
+      const cleanLocation = locationFilter.split(' ')[0];
+      const matchService = serviceFilter ? item.service.includes(serviceFilter) : true;
+      const matchLocation = locationFilter ? item.area.includes(cleanLocation) || item.location.includes(cleanLocation) : true;
       return matchService && matchLocation;
     });
     setFilteredCompanions(result);
@@ -60,82 +78,117 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#132420] text-white font-sans p-4 flex flex-col items-center justify-center">
       <div className="w-[308px] h-[640px] bg-[#F7F0E4] text-[#221F19] rounded-[34px] shadow-2xl overflow-hidden flex flex-col">
         
-        {/* Appbar */}
-        <div className="bg-[#204A42] text-white p-3 flex justify-between items-center">
-          <div className="flex items-center gap-2 font-bold text-sm">
-            <span className="w-5 h-5 bg-[#E19A3C] text-[#123029] rounded flex items-center justify-center text-xs">C</span>
-            Care Companion
+        {/* Top Bar / Header */}
+        <div className="bg-[#204A42] text-white px-4 py-3 flex justify-between items-center border-b border-[#15332d]">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-[#D88A34] text-white rounded font-bold flex items-center justify-center text-xs">
+              C
+            </div>
+            <span className="font-bold text-sm tracking-wide">Care Companion</span>
           </div>
-          <span className="text-xs bg-white/20 px-2 py-1 rounded-full text-white cursor-pointer hover:bg-white/30">G Sign in</span>
+          <button className="text-xs bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-full transition flex items-center gap-1">
+            <span>👤</span> Sign in
+          </button>
         </div>
 
-        {/* Content */}
+        {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
-          <div>
-            <h1 className="font-semibold text-sm text-[#221F19]">ต้องการเพื่อนไปด้วยวันนี้ไหม?</h1>
-            <p className="text-xs text-[#5B5648]">เลือกประเภทธุระ วันเวลา แล้วเราจะแนะนำคนที่เหมาะกับคุณ</p>
-          </div>
+          
+          {/* Header Title Box */}
+          <div className="bg-[#204A42] text-white p-3 rounded-2xl space-y-1 shadow">
+            <h2 className="font-bold text-xs leading-tight">ต้องการคนเพื่อนไปทำอะไรบ้าง?</h2>
+            <p className="text-[10px] opacity-80 leading-relaxed">
+              เลือกบริการและจุดนัดพบ เพื่อค้นหาผู้ช่วยที่คุณไว้วางใจได้
+            </p>
 
-          {/* Search Inputs */}
-          <div className="space-y-2">
-            <input 
-              type="text" 
-              placeholder="📋 พาไปโรงพยาบาล" 
-              value={serviceFilter}
-              onChange={(e) => setServiceFilter(e.target.value)}
-              className="w-full text-xs p-2 border border-[#DED2B8] rounded-lg bg-white outline-none focus:border-[#204A42]" 
-            />
-            <input 
-              type="text" 
-              placeholder="📍 บางกะปิ" 
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-              className="w-full text-xs p-2 border border-[#DED2B8] rounded-lg bg-white outline-none focus:border-[#204A42]" 
-            />
-            <div className="flex gap-2">
-              <button 
-                onClick={handleSearch}
-                className="flex-1 bg-[#204A42] hover:bg-[#15332d] text-white py-2 rounded-lg text-xs font-semibold transition active:scale-95"
-              >
-                ค้นหาผู้ช่วย
-              </button>
-              {(serviceFilter || locationFilter) && (
-                <button 
-                  onClick={handleReset}
-                  className="bg-[#DED2B8] hover:bg-[#c8ba9d] text-[#221F19] px-3 py-2 rounded-lg text-xs font-semibold transition"
+            {/* Inputs Form */}
+            <div className="space-y-2 pt-2 text-[#221F19]">
+              
+              {/* Input 1: Hospital/Service with Datalist Auto-complete */}
+              <div>
+                <input
+                  type="text"
+                  placeholder="📍 พาไปโรงพยาบาลไหน?"
+                  list="services-list"
+                  value={serviceFilter}
+                  onChange={(e) => setServiceFilter(e.target.value)}
+                  className="w-full text-xs p-2 rounded-lg border border-[#DED2B8] bg-white outline-none focus:border-[#204A42]"
+                />
+                <datalist id="services-list">
+                  {SERVICES.map((s, idx) => (
+                    <option key={idx} value={s} />
+                  ))}
+                </datalist>
+              </div>
+
+              {/* Input 2: Location/Province with Datalist Auto-complete */}
+              <div>
+                <input
+                  type="text"
+                  placeholder="📌 บางซื่อ, ปทุมธานี"
+                  list="locations-list"
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  className="w-full text-xs p-2 rounded-lg border border-[#DED2B8] bg-white outline-none focus:border-[#204A42]"
+                />
+                <datalist id="locations-list">
+                  {LOCATIONS.map((loc, idx) => (
+                    <option key={idx} value={loc} />
+                  ))}
+                </datalist>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={handleSearch}
+                  className="flex-1 bg-[#D88A34] hover:bg-[#b87024] text-white py-1.5 rounded-lg text-xs font-semibold transition active:scale-95 shadow"
                 >
-                  ล้าง
+                  ค้นหาผู้ช่วย
                 </button>
-              )}
+                {(serviceFilter || locationFilter) && (
+                  <button
+                    onClick={handleReset}
+                    className="px-2.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs transition"
+                  >
+                    ล้าง
+                  </button>
+                )}
+              </div>
+
             </div>
           </div>
 
-          {/* Companion List */}
-          <div className="space-y-2">
+          {/* Companion Cards List */}
+          <div className="space-y-2.5">
             {filteredCompanions.length > 0 ? (
               filteredCompanions.map((item) => (
                 <Link key={item.id} href={item.link} className="block">
-                  <div className="bg-white p-3 rounded-xl border border-[#DED2B8] flex gap-3 cursor-pointer hover:border-[#204A42] transition shadow-sm">
-                    <div className={`w-12 h-12 ${item.avatarBg} rounded-lg flex items-center justify-center text-xl`}>
-                      {item.icon}
+                  <div className="bg-white p-3 rounded-2xl border border-[#DED2B8] shadow-sm hover:border-[#204A42] transition flex gap-3 items-start">
+                    <div className={`w-12 h-12 ${item.avatarBg} rounded-full flex items-center justify-center text-xl shrink-0 shadow-inner`}>
+                      🧑
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex justify-between items-start">
-                        <span className="font-semibold text-xs text-[#221F19]">
-                          {item.name} <span className="font-normal text-[#5B5648]">· {item.age} ปี</span>
+                        <h3 className="font-bold text-xs text-[#221F19] truncate">
+                          {item.name} ({item.gender}) - {item.age} ปี
+                        </h3>
+                        <span className="text-[10px] text-amber-600 font-bold shrink-0">
+                          ★ {item.rating} ({item.reviewsCount})
                         </span>
-                        <span className="text-xs text-[#B97722] font-semibold">★ {item.rating} ({item.reviewsCount})</span>
                       </div>
-                      <p className="text-[11px] text-[#5B5648]">📍 {item.area}</p>
-                      <p className={`text-[10px] ${item.badgeColor} mt-1 font-semibold`}>{item.badge}</p>
+                      <p className="text-[10px] text-[#5B5648] truncate">📍 {item.area}</p>
+                      <div className={`inline-block ${item.badgeColor} text-white text-[9px] px-2 py-0.5 rounded-full`}>
+                        🛡️ {item.badge}
+                      </div>
                     </div>
                   </div>
                 </Link>
               ))
             ) : (
               <div className="text-center py-6 space-y-2">
-                <p className="text-xs text-[#5B5648]">ไม่พบผู้ช่วยตามเงื่อนไขที่ค้นหา</p>
-                <button 
+                <p className="text-xs text-[#5B5648]">ไม่พบผู้ช่วยตามเงื่อนไขที่คุณเลือก</p>
+                <button
                   onClick={handleReset}
                   className="text-xs text-[#204A42] font-bold underline"
                 >
@@ -146,6 +199,7 @@ export default function HomePage() {
           </div>
 
         </div>
+
       </div>
     </div>
   );

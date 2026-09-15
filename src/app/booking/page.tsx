@@ -42,10 +42,10 @@ export default function BookingPage() {
             <p><strong>ยอดรวม:</strong> <span className="text-[#B85B42] font-bold">{totalPrice} บาท</span></p>
           </div>
           
-          {/* ลิงก์นำทางไปยังหน้ารีวิวหลังจากจองสำเร็จ */}
-          <Link href="/review" className="w-full">
+          {/* ปรับลิงก์ให้ไปหน้าติดตามสถานะ / แชท ก่อนหน้ารีวิว */}
+          <Link href="/chat" className="w-full">
             <button className="w-full bg-[#204A42] hover:bg-[#15332d] text-white py-2.5 rounded-lg text-xs font-bold transition shadow">
-              ให้คะแนนการบริการ
+              ไปหน้าติดตามสถานะบริการ
             </button>
           </Link>
         </div>
@@ -63,7 +63,7 @@ export default function BookingPage() {
             <Link href="/companion" className="hover:opacity-80 text-base">←</Link>
             <span>ยืนยันการจอง</span>
           </div>
-          <span className="text-xs bg-white/20 px-2 py-1 rounded-full text-white">G Sign in</span>
+          <span className="text-xs bg-white/20 px-2 py-1 rounded-full text-white">Sign in</span>
         </div>
 
         {/* Content */}
