@@ -2,51 +2,99 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabaseClient';
 
 interface Booking {
   id: string | number;
-  companionName: string;
+  companionName?: string;
+  companion_name?: string;
   location: string;
   date: string;
   time: string;
   hours: number | string;
-  userName: string;
-  userGender: string;
-  userAge: string;
+  userName?: string;
+  user_name?: string;
+  userGender?: string;
+  user_gender?: string;
+  userAge?: string;
+  user_age?: string;
   phone: string;
   disease: string;
   allergy: string;
   price: number;
   status: string;
   taskNote?: string;
+  task_note?: string;
 }
 
 export default function HistoryPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setIsMounted(true);
+    fetchBookings();
+  }, []);
+
+  const fetchBookings = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      // 1. ถ้ามี User ให้ดึงข้อมูลจาก Supabase ที่ตรงกับ user_id
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        // Map คอลัมน์จาก DB ให้เข้ากับ UI
+        const mappedData = data.map((b: any) => ({
+          ...b,
+          companionName: b.companion_name || b.companionName,
+          userName: b.user_name || b.userName,
+          userGender: b.user_gender || b.userGender,
+          userAge: b.user_age || b.userAge,
+          taskNote: b.task_note || b.taskNote,
+        }));
+        setBookings(mappedData);
+        setLoading(false);
+        return;
+      }
+    }
+
+    // 2. ถ้าไม่มีข้อมูลใน Supabase หรือไม่ได้ล็อกอิน ให้ fallback มาใช้ localStorage
     const saved = localStorage.getItem('care_bookings');
     if (saved) {
       try {
         setBookings(JSON.parse(saved));
       } catch (e) {
-        console.error('Failed to parse bookings:', e);
+        console.error('Failed to parse local bookings:', e);
       }
     }
-  }, []);
+    setLoading(false);
+  };
 
-  const handleDeleteBooking = (id: string | number) => {
+  const handleDeleteBooking = async (id: string | number) => {
     if (confirm('คุณต้องการลบประวัติการจองนี้ใช่หรือไม่?')) {
+      // ลบจาก Supabase (ถ้าเป็น id ของ DB)
+      await supabase.from('bookings').delete().eq('id', id);
+
+      // ลบจาก State & LocalStorage
       const updated = bookings.filter((b) => b.id !== id);
       setBookings(updated);
       localStorage.setItem('care_bookings', JSON.stringify(updated));
     }
   };
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (confirm('คุณต้องการลบประวัติการจองทั้งหมดใช่หรือไม่?')) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('bookings').delete().eq('user_id', user.id);
+      }
       setBookings([]);
       localStorage.removeItem('care_bookings');
     }
@@ -76,7 +124,11 @@ export default function HistoryPage() {
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-[#F7F0E4] text-[#221F19]">
-          {bookings.length === 0 ? (
+          {loading ? (
+            <div className="h-full flex flex-col items-center justify-center text-gray-500 text-sm">
+              <p>กำลังโหลดข้อมูลประวัติการจอง...</p>
+            </div>
+          ) : bookings.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-500 text-sm gap-2">
               <span className="text-3xl">📋</span>
               <p>ไม่มีประวัติการจอง</p>
@@ -91,7 +143,7 @@ export default function HistoryPage() {
                 {/* Status Badge & Delete Button */}
                 <div className="flex justify-between items-center mb-2 pb-2 border-b border-gray-100">
                   <span className="font-bold text-xs text-[#204A42]">
-                    ผู้ช่วย: {item.companionName || 'คุณสมชาย'}
+                    ผู้ช่วย: {item.companionName || item.companion_name || 'คุณสมชาย'}
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="bg-[#D88A34] text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
@@ -115,9 +167,9 @@ export default function HistoryPage() {
                   <p className="text-gray-600">
                     ⏰ {item.date} | {item.time} น. ({item.hours} ชม.)
                   </p>
-                  {item.taskNote && (
+                  {(item.taskNote || item.task_note) && (
                     <p className="text-gray-500 italic text-[10px]">
-                      📝 Note: {item.taskNote}
+                      📝 Note: {item.taskNote || item.task_note}
                     </p>
                   )}
                 </div>
@@ -125,7 +177,7 @@ export default function HistoryPage() {
                 {/* Patient Box */}
                 <div className="mt-2 bg-[#F7F0E4]/60 p-2.5 rounded-xl border border-[#E8DCC4] text-[10px] space-y-0.5 text-gray-700">
                   <p className="font-bold text-[#204A42]">
-                    🩺 ผู้รับบริการ: {item.userName || '-'} ({item.userGender || '-'}, {item.userAge || '-'} ปี)
+                    🩺 ผู้รับบริการ: {item.userName || item.user_name || '-'} ({item.userGender || item.user_gender || '-'}, {item.userAge || item.user_age || '-'} ปี)
                   </p>
                   <p>📞 เบอร์ฉุกเฉิน: {item.phone || '-'}</p>
                   <p>• โรค/ข้อควรระวัง: {item.disease || '-'}</p>
@@ -139,13 +191,13 @@ export default function HistoryPage() {
                   </span>
                   <div className="flex gap-1.5">
                     <Link
-                      href={`/chat?companionName=${encodeURIComponent(item.companionName || 'คุณสมชาย')}&location=${encodeURIComponent(item.location || '')}&time=${encodeURIComponent(item.time || '')}&hours=${encodeURIComponent(String(item.hours || ''))}`}
+                      href={`/chat?companionName=${encodeURIComponent(item.companionName || item.companion_name || 'คุณสมชาย')}&location=${encodeURIComponent(item.location || '')}&time=${encodeURIComponent(item.time || '')}&hours=${encodeURIComponent(String(item.hours || ''))}`}
                       className="bg-[#204A42] text-white text-[10px] px-3 py-1.5 rounded-xl font-medium hover:bg-[#15332d] transition"
                     >
                       💬 คุยต่อ
                     </Link>
                     <Link
-                      href={`/review?companionName=${encodeURIComponent(item.companionName || 'คุณสมชาย')}`}
+                      href={`/review?companionName=${encodeURIComponent(item.companionName || item.companion_name || 'คุณสมชาย')}`}
                       className="bg-[#D88A34] text-white text-[10px] px-3 py-1.5 rounded-xl font-medium hover:bg-[#c27a2b] transition"
                     >
                       ⭐ รีวิว

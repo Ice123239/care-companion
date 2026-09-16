@@ -3,6 +3,7 @@
 import React, { useState, useEffect, ChangeEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { supabase } from '@/lib/supabaseClient';
 
 const LOCATIONS = [
   'รพ.จุฬาลงกรณ์ (ปทุมวัน)',
@@ -44,6 +45,13 @@ export default function BookingPage() {
     setTodayStr(today);
     setTomorrowStr(tomorrow);
     setBookingDate(today);
+
+    // Clean up object URL on unmount
+    return () => {
+      if (slipImage) {
+        URL.revokeObjectURL(slipImage);
+      }
+    };
   }, []);
 
   const hourlyRate = 350;
@@ -77,27 +85,42 @@ export default function BookingPage() {
     }
   };
 
-  const handleCompletePayment = () => {
-    const newBooking = {
-      id: Date.now(),
-      companionName: 'คุณสมชาย',
+  const handleCompletePayment = async () => {
+    // 1. ดึงข้อมูล User ปัจจุบันจาก Supabase
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const newBookingData = {
+      companion_name: 'คุณสมชาย',
       location: finalLocation,
       date: bookingDate,
       time: selectedTime,
       hours: hours,
       price: totalPrice,
-      taskNote: taskNote || 'พาไปรับยา / ทำธุระ',
-      userName: patientName,
-      userAge: patientAge || '-',
-      userGender: patientGender,
+      task_note: taskNote || 'พาไปรับยา / ทำธุระ',
+      user_name: patientName,
+      user_age: patientAge ? parseInt(patientAge, 10) : null, // แปลงเป็น Int หรือปล่อย null
+      user_gender: patientGender,
       phone: emergencyPhone,
       disease: medicalCondition || 'ไม่มี',
       allergy: allergies || 'ไม่มี',
       status: 'กำลังดำเนินการ',
+      user_id: user ? user.id : null,
     };
 
+    // 2. บันทึกลง Supabase Database (แก้ไขให้ส่งข้อมูลได้ทั้งล็อกอินและไม่ล็อกอิน)
+    try {
+      const { error } = await supabase.from('bookings').insert([newBookingData]);
+      if (error) {
+        console.error('Error inserting booking to Supabase:', error.message);
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+    }
+
+    // 3. สำรองข้อมูลลง LocalStorage (สำหรับออฟไลน์/แสดงผลฝั่ง Client)
+    const localBooking = { id: Date.now(), companionName: 'คุณสมชาย', ...newBookingData };
     const existingBookings = JSON.parse(localStorage.getItem('care_bookings') || '[]');
-    const updatedBookings = [newBooking, ...existingBookings];
+    const updatedBookings = [localBooking, ...existingBookings];
     localStorage.setItem('care_bookings', JSON.stringify(updatedBookings));
 
     setStep('completed');
@@ -117,7 +140,7 @@ export default function BookingPage() {
               {step === 'completed' && 'ส่งคำขอเรียบร้อย'}
             </span>
           </div>
-          <span className="text-[10px] bg-white/20 px-2.5 py-1 rounded-full text-white">Google Auth</span>
+          <span className="text-[10px] bg-white/20 px-2.5 py-1 rounded-full text-white">Care Companion</span>
         </div>
 
         {/* Step 1: Booking Form */}
@@ -410,7 +433,7 @@ export default function BookingPage() {
               <h2 className="font-bold text-base text-[#204A42]">ส่งคำขอและชำระเงินสำเร็จ!</h2>
               
               <div className="bg-white p-3 rounded-xl border border-[#DED2B8] text-left text-xs space-y-1 shadow-sm">
-                <p><strong>ผู้รับบริการ:</strong> {patientName} ({patientGender}, {patientAge} ปี)</p>
+                <p><strong>ผู้รับบริการ:</strong> {patientName} ({patientGender}, {patientAge ? `${patientAge} ปี` : '-'})</p>
                 <p><strong>เบอร์ฉุกเฉิน:</strong> {emergencyPhone}</p>
                 <p><strong>สถานที่:</strong> {finalLocation}</p>
                 <p><strong>เวลานัด:</strong> {bookingDate} | {selectedTime} น. ({hours} ชม.)</p>
