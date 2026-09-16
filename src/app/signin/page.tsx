@@ -16,13 +16,22 @@ export default function SignInPage() {
       return;
     }
     // จำลองการบันทึกสถานะการ Login
-    localStorage.setItem('user_session', JSON.stringify({ email, name: email.split('@')[0] }));
+    localStorage.setItem('user_session', JSON.stringify({ 
+      email, 
+      name: email.split('@')[0],
+      isLoggedIn: true 
+    }));
     alert('เข้าสู่ระบบสำเร็จ!');
     router.push('/');
   };
 
+  // Mock Google Login บายพาส OAuth โดยตรง
   const handleGoogleLogin = () => {
-    localStorage.setItem('user_session', JSON.stringify({ email: 'user@gmail.com', name: 'Google User' }));
+    localStorage.setItem('user_session', JSON.stringify({ 
+      email: 'user@gmail.com', 
+      name: 'Google User',
+      isLoggedIn: true 
+    }));
     alert('เข้าสู่ระบบด้วย Google สำเร็จ!');
     router.push('/');
   };
