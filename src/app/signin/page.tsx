@@ -15,39 +15,33 @@ export default function SignInPage() {
       alert('กรุณากรอกอีเมลและรหัสผ่าน');
       return;
     }
-    // จำลองการบันทึกสถานะการ Login
     localStorage.setItem('user_session', JSON.stringify({ 
       email, 
-      name: email.split('@')[0],
-      isLoggedIn: true 
+      name: email.split('@')[0] 
     }));
     alert('เข้าสู่ระบบสำเร็จ!');
-    router.push('/');
+    window.location.href = '/';
   };
 
-  // Mock Google Login บายพาส OAuth โดยตรง
+  // ปุ่ม Google จะไม่เรียก Supabase OAuth อีกต่อไป
   const handleGoogleLogin = () => {
     localStorage.setItem('user_session', JSON.stringify({ 
       email: 'user@gmail.com', 
-      name: 'Google User',
-      isLoggedIn: true 
+      name: 'Google User' 
     }));
     alert('เข้าสู่ระบบด้วย Google สำเร็จ!');
-    router.push('/');
+    window.location.href = '/';
   };
 
   return (
     <div className="min-h-screen bg-[#132420] text-white p-4 flex justify-center items-center font-sans">
       <div className="w-full max-w-[400px] bg-[#F7F0E4] text-[#221F19] p-6 rounded-[32px] shadow-2xl border border-[#2e6258] relative">
-        
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <Link href="/" className="text-xl text-[#204A42] font-bold">←</Link>
           <h1 className="text-lg font-bold text-[#204A42]">เข้าสู่ระบบ</h1>
           <div className="w-5" />
         </div>
 
-        {/* Form */}
         <form onSubmit={handleLogin} className="space-y-4 text-xs">
           <div>
             <label className="block text-[#5B5648] font-semibold mb-1">อีเมล</label>
@@ -86,14 +80,13 @@ export default function SignInPage() {
           </span>
         </div>
 
-        {/* Google Button */}
         <button
           onClick={handleGoogleLogin}
+          type="button"
           className="w-full bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2.5 rounded-xl border border-[#DED2B8] text-xs flex items-center justify-center gap-2 transition shadow-sm cursor-pointer"
         >
           <span className="text-base">🌐</span> เข้าสู่ระบบด้วย Google
         </button>
-
       </div>
     </div>
   );
